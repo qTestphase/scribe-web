@@ -765,19 +765,17 @@ export default function Home() {
       </div>
 
       {/* Mobile Sidebar Overlay */}
-      {sidebarOpen && (
-        <div 
-          className="fixed inset-0 z-50 md:hidden bg-black/50"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
+      <div 
+        className={`fixed inset-0 z-40 md:hidden bg-black transition-opacity duration-300 ${sidebarOpen ? 'opacity-50' : 'opacity-0 pointer-events-none'}`}
+        onClick={() => setSidebarOpen(false)}
+      />
 
       {/* SIDEBAR */}
       <aside className={`
         fixed md:static inset-y-0 left-0 z-50
         w-72 md:w-64 
         ${theme.sidebar} border-r p-4 flex flex-col
-        transform transition-transform duration-200 ease-out
+        transform transition-transform duration-300 ease-[cubic-bezier(0.25,0.1,0.25,1)]
         ${sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
       `}>
         <div className="flex items-center justify-between mb-4">
