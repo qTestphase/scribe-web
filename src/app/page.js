@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
-import { Mic, Plus, MoreVertical, Search, Moon, Sun, Loader2, Download, MessageSquare, X } from "lucide-react";
+import { Mic, Plus, MoreVertical, Search, Moon, Sun, Loader2, Download, MessageSquare, X, Menu } from "lucide-react";
 
 /* ===== Waveform tuning ===== */
 const HALF_BARS = 20;
@@ -45,6 +45,7 @@ export default function Home() {
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [feedbackText, setFeedbackText] = useState("");
   const [feedbackStatus, setFeedbackStatus] = useState("idle"); // idle, sending, sent, error
+  const [sidebarOpen, setSidebarOpen] = useState(false); // Mobile sidebar
 
   /* ---------- RECORDING + WAVES ---------- */
   const [recording, setRecording] = useState(false);
@@ -670,13 +671,60 @@ export default function Home() {
         }
       `}</style>
 
+      {/* Mobile Header */}
+      <div className={`fixed top-0 left-0 right-0 z-40 md:hidden flex items-center justify-between px-4 py-3 ${theme.sidebar} border-b`}>
+        <button
+          onClick={() => setSidebarOpen(true)}
+          className={`p-2 rounded ${theme.hover}`}
+          aria-label="Open menu"
+        >
+          <Menu size={20} />
+        </button>
+        <h2 className="text-lg font-semibold">Scribe</h2>
+        <button
+          onClick={() => setDarkMode(!darkMode)}
+          className={`p-2 rounded ${theme.hover}`}
+          aria-label="Toggle dark mode"
+        >
+          {darkMode ? <Sun size={18} /> : <Moon size={18} />}
+        </button>
+      </div>
+
+      {/* Mobile Sidebar Overlay */}
+      {sidebarOpen && (
+        <div 
+          className="fixed inset-0 z-50 md:hidden bg-black/50"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
       {/* SIDEBAR */}
-      <aside className={`w-64 ${theme.sidebar} border-r p-4 flex flex-col`}>
+      <aside className={`
+        fixed md:static inset-y-0 left-0 z-50
+        w-72 md:w-64 
+        ${theme.sidebar} border-r p-4 flex flex-col
+        transform transition-transform duration-200 ease-out
+        ${sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+      `}>
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold">Scribe</h2>
-          <button
-            onClick={() => setDarkMode(!darkMode)}
-            className={`p-2 rounded ${theme.hover}`}
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => setDarkMode(!darkMode)}
+              className={`p-2 rounded ${theme.hover} hidden md:block`}
+              aria-label="Toggle dark mode"
+            >
+              {darkMode ? <Sun size={18} /> : <Moon size={18} />}
+            </button>
+            <button
+              onClick={() => setSidebarOpen(false)}
+              className={`p-2 rounded ${theme.hover} md:hidden`}
+              aria-label="Close menu"
+            >
+              <X size={18} />
+            </button>
+          </div>
+        </div>
             aria-label="Toggle dark mode"
           >
             {darkMode ? <Sun size={18} /> : <Moon size={18} />}
@@ -684,7 +732,10 @@ export default function Home() {
         </div>
 
         <button
-          onClick={() => createSession({ focusTitleEdit: true })}
+          onClick={() => {
+            createSession({ focusTitleEdit: true });
+            setSidebarOpen(false); // Close on mobile
+          }}
           className={`flex items-center gap-2 text-sm mb-4 ${theme.text}`}
         >
           <Plus size={16} /> New note
@@ -725,7 +776,10 @@ export default function Home() {
                 />
               ) : (
                 <button
-                  onClick={() => setActiveId(s.id)}
+                  onClick={() => {
+                    setActiveId(s.id);
+                    setSidebarOpen(false); // Close on mobile
+                  }}
                   onDoubleClick={(e) => {
                     e.preventDefault();
                     setSidebarEditId(s.id);
@@ -903,7 +957,7 @@ export default function Home() {
       )}
 
       {/* MAIN */}
-      <main className="flex-1 px-6 md:px-12 py-10 relative flex flex-col items-center">
+      <main className="flex-1 px-4 md:px-12 pt-16 md:pt-10 pb-10 relative flex flex-col items-center">
         {!note ? (
           <div className="min-h-[70vh] flex items-center justify-center w-full">
             <div className="w-full max-w-xl">
