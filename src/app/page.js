@@ -46,6 +46,8 @@ export default function Home() {
   const [feedbackText, setFeedbackText] = useState("");
   const [feedbackStatus, setFeedbackStatus] = useState("idle"); // idle, sending, sent, error
   const [sidebarOpen, setSidebarOpen] = useState(false); // Mobile sidebar
+  const touchStartX = useRef(0);
+  const touchEndX = useRef(0);
 
   /* ---------- RECORDING + WAVES ---------- */
   const [recording, setRecording] = useState(false);
@@ -121,6 +123,38 @@ export default function Home() {
     }
   }, [activeId]);
 
+  // Mobile swipe gestures for sidebar
+  useEffect(() => {
+    const minSwipeDistance = 50;
+
+    function handleTouchStart(e) {
+      touchStartX.current = e.touches[0].clientX;
+    }
+
+    function handleTouchEnd(e) {
+      touchEndX.current = e.changedTouches[0].clientX;
+      const distance = touchEndX.current - touchStartX.current;
+
+      // Swipe right to open (only from left edge)
+      if (distance > minSwipeDistance && touchStartX.current < 50) {
+        setSidebarOpen(true);
+      }
+      
+      // Swipe left to close
+      if (distance < -minSwipeDistance && sidebarOpen) {
+        setSidebarOpen(false);
+      }
+    }
+
+    document.addEventListener("touchstart", handleTouchStart);
+    document.addEventListener("touchend", handleTouchEnd);
+
+    return () => {
+      document.removeEventListener("touchstart", handleTouchStart);
+      document.removeEventListener("touchend", handleTouchEnd);
+    };
+  }, [sidebarOpen]);
+
   /* ---------- KEYBOARD SHORTCUTS ---------- */
   const toggleRecordingRef = useRef(null);
 
@@ -152,6 +186,46 @@ export default function Home() {
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [editingTitle, sidebarEditId]);
+
+  /* ---------- SWIPE GESTURE FOR MOBILE SIDEBAR ---------- */
+  useEffect(() => {
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let touchEndX = 0;
+
+    function handleTouchStart(e) {
+      touchStartX = e.touches[0].clientX;
+      touchStartY = e.touches[0].clientY;
+    }
+
+    function handleTouchEnd(e) {
+      touchEndX = e.changedTouches[0].clientX;
+      const touchEndY = e.changedTouches[0].clientY;
+      
+      const deltaX = touchEndX - touchStartX;
+      const deltaY = Math.abs(touchEndY - touchStartY);
+      
+      // Only trigger if horizontal swipe is dominant (not scrolling)
+      if (Math.abs(deltaX) > 50 && deltaY < 100) {
+        // Swipe right from left edge (within 30px) opens sidebar
+        if (deltaX > 0 && touchStartX < 30 && !sidebarOpen) {
+          setSidebarOpen(true);
+        }
+        // Swipe left anywhere closes sidebar
+        if (deltaX < 0 && sidebarOpen) {
+          setSidebarOpen(false);
+        }
+      }
+    }
+
+    document.addEventListener("touchstart", handleTouchStart);
+    document.addEventListener("touchend", handleTouchEnd);
+    
+    return () => {
+      document.removeEventListener("touchstart", handleTouchStart);
+      document.removeEventListener("touchend", handleTouchEnd);
+    };
+  }, [sidebarOpen]);
 
   /* ---------- CLICK OUTSIDE MENU CLOSE ---------- */
   useEffect(() => {
