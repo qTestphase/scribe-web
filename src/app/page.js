@@ -125,7 +125,7 @@ export default function Home() {
 
   // Mobile swipe gestures for sidebar
   useEffect(() => {
-    const minSwipeDistance = 50;
+    const minSwipeDistance = 30;
 
     function handleTouchStart(e) {
       touchStartX.current = e.touches[0].clientX;
@@ -135,8 +135,8 @@ export default function Home() {
       touchEndX.current = e.changedTouches[0].clientX;
       const distance = touchEndX.current - touchStartX.current;
 
-      // Swipe right to open (only from left edge)
-      if (distance > minSwipeDistance && touchStartX.current < 50) {
+      // Swipe right to open (from anywhere)
+      if (distance > minSwipeDistance && !sidebarOpen) {
         setSidebarOpen(true);
       }
       
