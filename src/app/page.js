@@ -725,11 +725,6 @@ export default function Home() {
             </button>
           </div>
         </div>
-            aria-label="Toggle dark mode"
-          >
-            {darkMode ? <Sun size={18} /> : <Moon size={18} />}
-          </button>
-        </div>
 
         <button
           onClick={() => {
