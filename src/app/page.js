@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
-import { Mic, Plus, MoreVertical, Search, Moon, Sun, Loader2, Download } from "lucide-react";
+import { Mic, Plus, MoreVertical, Search, Moon, Sun, Loader2, Download, MessageSquare, X } from "lucide-react";
 
 /* ===== Waveform tuning ===== */
 const HALF_BARS = 20;
@@ -42,6 +42,9 @@ export default function Home() {
   const [isGeneratingTitle, setIsGeneratingTitle] = useState(false);
   const [generatingTitleForId, setGeneratingTitleForId] = useState(null);
   const [newBlockIndex, setNewBlockIndex] = useState(null); // For fade-in animation
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const [feedbackText, setFeedbackText] = useState("");
+  const [feedbackStatus, setFeedbackStatus] = useState("idle"); // idle, sending, sent, error
 
   /* ---------- RECORDING + WAVES ---------- */
   const [recording, setRecording] = useState(false);
@@ -345,6 +348,35 @@ export default function Home() {
     a.download = `${note.title.replace(/[^a-z0-9]/gi, "_")}.txt`;
     a.click();
     URL.revokeObjectURL(url);
+  }
+
+  // Submit feedback to Formspree
+  async function submitFeedback(e) {
+    e.preventDefault();
+    if (!feedbackText.trim()) return;
+    
+    setFeedbackStatus("sending");
+    
+    try {
+      const res = await fetch("https://formspree.io/f/mkonrrna", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: feedbackText }),
+      });
+      
+      if (res.ok) {
+        setFeedbackStatus("sent");
+        setFeedbackText("");
+        setTimeout(() => {
+          setFeedbackOpen(false);
+          setFeedbackStatus("idle");
+        }, 2000);
+      } else {
+        setFeedbackStatus("error");
+      }
+    } catch {
+      setFeedbackStatus("error");
+    }
   }
 
   /* ---------- WAVEFORM ---------- */
@@ -779,6 +811,13 @@ export default function Home() {
 
         {/* Footer with storage notice and disclaimer */}
         <div className={`mt-4 pt-4 border-t ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+          <button
+            onClick={() => setFeedbackOpen(true)}
+            className={`flex items-center gap-2 text-sm ${theme.textMuted} ${theme.hover} w-full px-2 py-1.5 rounded mb-3`}
+          >
+            <MessageSquare size={14} />
+            Send feedback
+          </button>
           <p className={`text-xs ${theme.textMuted2} leading-relaxed`}>
             Notes stored locally in your browser.
           </p>
@@ -787,6 +826,81 @@ export default function Home() {
           </p>
         </div>
       </aside>
+
+      {/* Feedback Modal */}
+      {feedbackOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          {/* Backdrop */}
+          <div 
+            className="absolute inset-0 bg-black/50"
+            onClick={() => {
+              if (feedbackStatus !== "sending") {
+                setFeedbackOpen(false);
+                setFeedbackStatus("idle");
+              }
+            }}
+          />
+          
+          {/* Modal */}
+          <div className={`relative w-full max-w-md rounded-lg shadow-xl p-6 ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
+            <button
+              onClick={() => {
+                setFeedbackOpen(false);
+                setFeedbackStatus("idle");
+              }}
+              className={`absolute top-4 right-4 ${theme.textMuted} hover:${theme.text}`}
+            >
+              <X size={20} />
+            </button>
+            
+            <h3 className={`text-lg font-semibold mb-2 ${theme.text}`}>Send Feedback</h3>
+            <p className={`text-sm ${theme.textMuted} mb-4`}>
+              Bug reports, feature requests, or just say hi!
+            </p>
+            
+            {feedbackStatus === "sent" ? (
+              <div className={`text-center py-8 ${theme.text}`}>
+                <p className="text-lg mb-1">Thanks for your feedback! 🎉</p>
+                <p className={`text-sm ${theme.textMuted}`}>We appreciate you taking the time.</p>
+              </div>
+            ) : (
+              <form onSubmit={submitFeedback}>
+                <textarea
+                  value={feedbackText}
+                  onChange={(e) => setFeedbackText(e.target.value)}
+                  placeholder="What's on your mind?"
+                  rows={4}
+                  className={`w-full p-3 rounded-lg border resize-none outline-none text-sm ${theme.input} ${darkMode ? 'placeholder:text-gray-500' : 'placeholder:text-gray-400'}`}
+                  disabled={feedbackStatus === "sending"}
+                />
+                
+                {feedbackStatus === "error" && (
+                  <p className="text-red-500 text-sm mt-2">Something went wrong. Please try again.</p>
+                )}
+                
+                <button
+                  type="submit"
+                  disabled={!feedbackText.trim() || feedbackStatus === "sending"}
+                  className={`mt-4 w-full py-2 px-4 rounded-lg text-sm font-medium transition disabled:opacity-50 ${
+                    darkMode 
+                      ? 'bg-white text-gray-900 hover:bg-gray-100' 
+                      : 'bg-gray-900 text-white hover:bg-gray-800'
+                  }`}
+                >
+                  {feedbackStatus === "sending" ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <Loader2 size={16} className="animate-spin" />
+                      Sending...
+                    </span>
+                  ) : (
+                    "Send Feedback"
+                  )}
+                </button>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* MAIN */}
       <main className="flex-1 px-6 md:px-12 py-10 relative flex flex-col items-center">
