@@ -722,9 +722,6 @@ export default function Home() {
   /* ---------- EMPTY STATE ---------- */
   const EmptyState = (
     <div className="flex flex-col items-center justify-center text-center">
-      <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-4 ${darkMode ? 'bg-gray-800' : 'bg-gray-200'}`}>
-        <Mic size={28} className={theme.textMuted} />
-      </div>
       <h3 className={`text-lg font-medium mb-1 ${theme.text}`}>No notes yet</h3>
       <p className={`text-sm ${theme.textMuted} mb-6`}>Record your first voice note to get started</p>
       {MicBlock}
